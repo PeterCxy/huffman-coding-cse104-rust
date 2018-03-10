@@ -10,7 +10,9 @@ use bit_vec::BitVec;
 use bitvec::*;
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 use std::collections::HashMap;
+use std::fs::File;
 use std::io::Cursor;
+use std::io::{Read, Write};
 use std::str;
 use tree::*;
 use traversal::*;
@@ -214,14 +216,58 @@ fn huffman_decode_from_bytes(data: &[u8]) -> Vec<u8> {
 }
 
 fn main() {
-    let data = b"A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED";
-    println!("original len = {}", data.len());
-    /*let (freq_table, encoded_data, padding) = huffman_encode(data);
-    println!("encoded: padding = {}, len = {}, data = {}", padding, encoded_data.len(), base64::encode(&encoded_data));
-    let decoded_data = huffman_decode(freq_table, &encoded_data, padding);
-    println!("decoded: len = {}, data = {}", decoded_data.len(), str::from_utf8(&decoded_data).unwrap());*/
-    let encoded_data = huffman_encode_to_bytes(data);
-    println!("encoded: len = {}, data = {}", encoded_data.len(), base64::encode(&encoded_data));
-    let decoded_data = huffman_decode_from_bytes(&encoded_data);
-    println!("decoded: len = {}, data = {}", decoded_data.len(), str::from_utf8(&decoded_data).unwrap());
+    let mut args: Vec<_> = std::env::args().collect();
+    args.remove(0);
+
+    if args[0] == "enc" {
+        encode(&args);
+    } else if args[0] == "dec" {
+        decode(&args);
+    }
+}
+
+fn encode(args: &[String]) {
+    if args.len() < 3 {
+        panic!("You must provide 2 arguments to this command.");
+    }
+
+    let file = &args[1];
+    println!("> Reading from file {}", file);
+    let data = read_file(file);
+    println!("> File length = {}", data.len());
+    println!("> Encoding...");
+    let encoded_data = huffman_encode_to_bytes(&data);
+    println!("> Encoded length: {}", encoded_data.len());
+    let target = &args[2];
+    println!("> Writing to {}", target);
+    write_file(target, &encoded_data);
+    println!("> Finished.");
+}
+
+fn decode(args: &[String]) {
+    if args.len() < 3 {
+        panic!("You must provide 2 arguments to this command.");
+    }
+
+    let file = &args[1];
+    println!("> Reading from file {}", file);
+    let data = read_file(file);
+    println!("> File length = {}", data.len());
+    println!("> Decoding...");
+    let decoded_data = huffman_decode_from_bytes(&data);
+    println!("> Decoded length: {}", decoded_data.len());
+    let target = &args[2];
+    println!("> Writing to {}", target);
+    write_file(target, &decoded_data);
+    println!("> Finished.");
+}
+
+fn read_file(file: &str) -> Vec<u8> {
+    let mut ret = Vec::new();
+    File::open(file).unwrap().read(&mut ret).unwrap();
+    return ret;
+}
+
+fn write_file(file: &str, data: &[u8]) {
+    File::create(file).unwrap().write(data).unwrap();
 }
