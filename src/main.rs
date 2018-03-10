@@ -54,37 +54,26 @@ fn build_huffman_tree(mut freq_table: HashMap<u8, u64>) -> TreeNode {
     });
 }
 
-fn traverse_huffman_tree(tree: &TreeNode) {
+/*
+ * Construct a dictionary based on a huffman tree
+ */
+fn traverse_huffman_tree(tree: &TreeNode) -> HashMap<Vec<bool>, u8> {
+    let mut ret = HashMap::new();
     for (path, val) in TreeIter::new(tree) {
-        println!("{}: {}", path.to_binary(), val);
+        ret.insert(path, val);
     }
+    return ret;
 }
 
-// SHOULD BE REMOVED
-fn _traverse_huffman_tree(tree: &TreeNode, path: &mut Vec<bool>) {
-    match *tree {
-        TreeNode::Leaf(ref leaf) => println!("{}: {} freq {}", path.to_binary(), leaf.value, leaf.freq),
-        TreeNode::Node(ref node) => {
-            path.push(true);
-            _traverse_huffman_tree(&node.left, path);
-            path.pop();
-            path.push(false);
-            _traverse_huffman_tree(&node.right, path);
-            path.pop();
-        },
-        TreeNode::Root(ref root) => {
-            path.push(true);
-            _traverse_huffman_tree(&root.left, path);
-            path.pop();
-            path.push(false);
-            _traverse_huffman_tree(&root.right, path);
-            path.pop();
-        }
+fn _print_huffman_dict(dict: HashMap<Vec<bool>, u8>) {
+    for (k, v) in &dict {
+        println!("{}: {}", k.to_binary(), v);
     }
 }
 
 fn main() {
     let table = build_frequency_table(b"A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED");
     let tree = build_huffman_tree(table.clone());
-    traverse_huffman_tree(&tree);
+    let dict = traverse_huffman_tree(&tree);
+    _print_huffman_dict(dict);
 }
