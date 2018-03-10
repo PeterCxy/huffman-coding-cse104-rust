@@ -234,10 +234,18 @@ fn encode(args: &[String]) {
     let file = &args[1];
     println!("> Reading from file {}", file);
     let data = read_file(file);
-    println!("> File length = {}", data.len());
+    let orig_len = data.len();
+
+    if orig_len == 0 {
+        panic!("Can't do anything for empty files");
+    }
+
+    println!("> File length = {}", orig_len);
     println!("> Encoding...");
     let encoded_data = huffman_encode_to_bytes(&data);
-    println!("> Encoded length: {}", encoded_data.len());
+    let encoded_len = encoded_data.len();
+    println!("> Encoded length: {}", encoded_len);
+    println!("> Compression ratio: {}%", (encoded_len as f32) / (orig_len as f32) * 100f32);
     let target = &args[2];
     println!("> Writing to {}", target);
     write_file(target, &encoded_data);
@@ -252,6 +260,11 @@ fn decode(args: &[String]) {
     let file = &args[1];
     println!("> Reading from file {}", file);
     let data = read_file(file);
+
+    if data.len() == 0 {
+        panic!("Can't do anything for empty files");
+    }
+
     println!("> File length = {}", data.len());
     println!("> Decoding...");
     let decoded_data = huffman_decode_from_bytes(&data);
@@ -264,7 +277,7 @@ fn decode(args: &[String]) {
 
 fn read_file(file: &str) -> Vec<u8> {
     let mut ret = Vec::new();
-    File::open(file).unwrap().read(&mut ret).unwrap();
+    File::open(file).unwrap().read_to_end(&mut ret).unwrap();
     return ret;
 }
 
