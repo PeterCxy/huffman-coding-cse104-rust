@@ -8,16 +8,22 @@ use tree::*;
 use traversal::*;
 
 /*
- * Build a huffman tree from some data
- * which can be later traversed to produce a huffman codebook
+ * Build a frequency table from some data
  */
-fn build_huffman_tree(data: &[u8]) -> TreeNode {
+fn build_frequency_table(data: &[u8]) -> HashMap<u8, u64> {
     let mut freq_table: HashMap<u8, u64> = HashMap::new();
     for i in data {
         let n = freq_table.get(i).map(|x| x.clone()).unwrap_or(0);
         freq_table.insert(i.clone(), n + 1);
     }
+    return freq_table;
+}
 
+/*
+ * Construct a huffman tree from a given frequency table
+ * which can be later traversed to produce a huffman codebook
+ */
+fn build_huffman_tree(mut freq_table: HashMap<u8, u64>) -> TreeNode {
     let mut vec: Vec<TreeNode> = freq_table.drain()
         .map(|(value, freq)| TreeNode::Leaf(Leaf {
             value,
@@ -78,5 +84,7 @@ fn _traverse_huffman_tree(tree: &TreeNode, path: &mut Vec<bool>) {
 }
 
 fn main() {
-    traverse_huffman_tree(&build_huffman_tree(b"A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"));
+    let table = build_frequency_table(b"A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED");
+    let tree = build_huffman_tree(table.clone());
+    traverse_huffman_tree(&tree);
 }
