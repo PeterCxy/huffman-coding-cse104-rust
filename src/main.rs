@@ -1,5 +1,6 @@
 extern crate base64;
 extern crate bit_vec;
+extern crate byteorder;
 
 mod bitvec;
 mod tree;
@@ -7,10 +8,26 @@ mod traversal;
 
 use bit_vec::BitVec;
 use bitvec::*;
+use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 use std::collections::HashMap;
+use std::io::Cursor;
 use std::str;
 use tree::*;
 use traversal::*;
+
+fn u32_to_bytes(value: u32) -> Vec<u8> {
+    let mut ret: Vec<u8> = Vec::with_capacity(4);
+    ret.write_u32::<LittleEndian>(value).unwrap();
+    return ret;
+}
+
+fn bytes_to_u32(bytes: &[u8]) -> u32 {
+    let mut v = Vec::with_capacity(4);
+    v.resize(4, 0);
+    v.clone_from_slice(bytes);
+    let mut cursor = Cursor::new(v);
+    cursor.read_u32::<LittleEndian>().unwrap()
+}
 
 /*
  * Build a frequency table from some data
@@ -22,6 +39,30 @@ fn build_frequency_table(data: &[u8]) -> HashMap<u8, u32> {
         freq_table.insert(i.clone(), n + 1);
     }
     return freq_table;
+}
+
+fn frequency_table_to_bytes(table: &HashMap<u8, u32>) -> Vec<u8> {
+    let mut ret = Vec::with_capacity(table.len() * 5);
+
+    for (&k, &v) in table {
+        ret.push(k);
+        ret.append(&mut u32_to_bytes(v));
+    }
+
+    return ret;
+}
+
+fn bytes_to_frequency_table(bytes: &[u8]) -> HashMap<u8, u32> {
+    let mut ret = HashMap::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        let k = bytes[i];
+        let v = bytes_to_u32(&bytes[(i + 1)..(i + 5)]);
+        ret.insert(k, v);
+        i += 5;
+    }
+
+    return ret;
 }
 
 /*
@@ -140,11 +181,47 @@ fn _huffman_decode_step(cur_value: bool, node: &TraversableNode) -> &TreeNode {
     }
 }
 
+/*
+ * Encode some data with huffman coding
+ * and serialize the result as bytes
+ * Layout:
+ * | Freq Table Length (1) | Padding Length (1) | Freq Table (variable) | Encoded Data (variable) |
+ */
+fn huffman_encode_to_bytes(data: &[u8]) -> Vec<u8> {
+    let (freq_table, mut encoded_data, padding) = huffman_encode(data);
+    let mut ret = Vec::new();
+
+    if freq_table.len() > <u8>::max_value() as usize {
+        panic!("Table impossibly large.");
+    }
+
+    ret.push(freq_table.len() as u8);
+    ret.push(padding);
+    ret.append(&mut frequency_table_to_bytes(&freq_table));
+    ret.append(&mut encoded_data);
+    return ret;
+}
+
+/*
+ * Deserialize the result of some previous huffman coding
+ * and decode it to the original data
+ */
+fn huffman_decode_from_bytes(data: &[u8]) -> Vec<u8> {
+    let freq_table_len = (data[0] as usize) * 5;
+    let padding = data[1];
+    let freq_table = bytes_to_frequency_table(&data[2..(2 + freq_table_len)]);
+    huffman_decode(freq_table, &data[(2 + freq_table_len)..], padding)
+}
+
 fn main() {
     let data = b"A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED";
     println!("original len = {}", data.len());
-    let (freq_table, encoded_data, padding) = huffman_encode(data);
+    /*let (freq_table, encoded_data, padding) = huffman_encode(data);
     println!("encoded: padding = {}, len = {}, data = {}", padding, encoded_data.len(), base64::encode(&encoded_data));
     let decoded_data = huffman_decode(freq_table, &encoded_data, padding);
+    println!("decoded: len = {}, data = {}", decoded_data.len(), str::from_utf8(&decoded_data).unwrap());*/
+    let encoded_data = huffman_encode_to_bytes(data);
+    println!("encoded: len = {}, data = {}", encoded_data.len(), base64::encode(&encoded_data));
+    let decoded_data = huffman_decode_from_bytes(&encoded_data);
     println!("decoded: len = {}, data = {}", decoded_data.len(), str::from_utf8(&decoded_data).unwrap());
 }
