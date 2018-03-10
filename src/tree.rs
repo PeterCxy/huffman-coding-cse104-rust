@@ -14,12 +14,12 @@ pub struct Root {
 #[derive(PartialEq, Eq)]
 pub struct Leaf {
     pub value: u8,
-    pub freq: u64
+    pub freq: u32
 }
 
 #[derive(PartialEq, Eq)]
 pub struct Node {
-    pub freq: u64,
+    pub freq: u32,
     pub left: Box<TreeNode>,
     pub right: Box<TreeNode>
 }
@@ -33,9 +33,9 @@ pub enum TreeNode {
 
 impl TreeNode {
     // For sorting
-    pub fn freq(&self) -> u64 {
+    pub fn freq(&self) -> u32 {
         match *self {
-            TreeNode::Root(ref _root) => <u64>::max_value(),
+            TreeNode::Root(ref _root) => <u32>::max_value(),
             TreeNode::Leaf(ref leaf) => leaf.freq,
             TreeNode::Node(ref node) => node.freq
         }

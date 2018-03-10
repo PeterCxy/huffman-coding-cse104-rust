@@ -15,8 +15,8 @@ use traversal::*;
 /*
  * Build a frequency table from some data
  */
-fn build_frequency_table(data: &[u8]) -> HashMap<u8, u64> {
-    let mut freq_table: HashMap<u8, u64> = HashMap::new();
+fn build_frequency_table(data: &[u8]) -> HashMap<u8, u32> {
+    let mut freq_table: HashMap<u8, u32> = HashMap::new();
     for i in data {
         let n = freq_table.get(i).map(|x| x.clone()).unwrap_or(0);
         freq_table.insert(i.clone(), n + 1);
@@ -28,7 +28,7 @@ fn build_frequency_table(data: &[u8]) -> HashMap<u8, u64> {
  * Construct a huffman tree from a given frequency table
  * which can be later traversed to produce a huffman codebook
  */
-fn build_huffman_tree(mut freq_table: HashMap<u8, u64>) -> TreeNode {
+fn build_huffman_tree(mut freq_table: HashMap<u8, u32>) -> TreeNode {
     let mut vec: Vec<TreeNode> = freq_table.drain()
         .map(|(value, freq)| TreeNode::Leaf(Leaf {
             value,
@@ -82,7 +82,7 @@ fn _print_huffman_dict(dict: HashMap<u8, BitVec<u32>>) {
  * padding value: how many zeros are added to the tail to align with the
  * memory cells, which should be truncated when decoding
  */
-fn huffman_encode(data: &[u8]) -> (HashMap<u8, u64>, Vec<u8>, u8) {
+fn huffman_encode(data: &[u8]) -> (HashMap<u8, u32>, Vec<u8>, u8) {
     let freq_table = build_frequency_table(data);
     let tree = build_huffman_tree(freq_table.clone());
     let dict = traverse_huffman_tree(&tree);
@@ -100,7 +100,7 @@ fn huffman_encode(data: &[u8]) -> (HashMap<u8, u64>, Vec<u8>, u8) {
  * Decode some given data encoded with huffman coding
  * with the frequency table, the data and the padding value
  */
-fn huffman_decode(freq_table: HashMap<u8, u64>, data: &[u8], padding: u8) -> Vec<u8> {
+fn huffman_decode(freq_table: HashMap<u8, u32>, data: &[u8], padding: u8) -> Vec<u8> {
     let tree = build_huffman_tree(freq_table);
     let mut huffman_vec = BitVec::from_bytes(data);
     let unpad_len = huffman_vec.len() - padding as usize + 1;
