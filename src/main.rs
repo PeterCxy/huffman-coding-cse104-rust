@@ -1,7 +1,10 @@
+extern crate bit_vec;
+
 mod bitvec;
 mod tree;
 mod traversal;
 
+use bit_vec::BitVec;
 use bitvec::*;
 use std::collections::HashMap;
 use tree::*;
@@ -57,7 +60,7 @@ fn build_huffman_tree(mut freq_table: HashMap<u8, u64>) -> TreeNode {
 /*
  * Construct a dictionary based on a huffman tree
  */
-fn traverse_huffman_tree(tree: &TreeNode) -> HashMap<Vec<bool>, u8> {
+fn traverse_huffman_tree(tree: &TreeNode) -> HashMap<BitVec<u32>, u8> {
     let mut ret = HashMap::new();
     for (path, val) in TreeIter::new(tree) {
         ret.insert(path, val);
@@ -65,7 +68,7 @@ fn traverse_huffman_tree(tree: &TreeNode) -> HashMap<Vec<bool>, u8> {
     return ret;
 }
 
-fn _print_huffman_dict(dict: HashMap<Vec<bool>, u8>) {
+fn _print_huffman_dict(dict: HashMap<BitVec<u32>, u8>) {
     for (k, v) in &dict {
         println!("{}: {}", k.to_binary(), v);
     }

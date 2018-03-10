@@ -1,13 +1,15 @@
+use bit_vec::BitVec;
+
 /*
  * Extended methods for Vec<bool> as a vector of bits
  */
-pub trait BitVec {
+pub trait MyBitVec {
     fn copy_append(&self, val: bool) -> Self;
     fn to_binary(&self) -> String;
 }
 
-impl BitVec for Vec<bool> {
-    fn copy_append(&self, val: bool) -> Vec<bool> {
+impl MyBitVec for BitVec<u32> {
+    fn copy_append(&self, val: bool) -> BitVec<u32> {
         let mut n = self.clone();
         n.push(val);
         return n;
@@ -15,7 +17,7 @@ impl BitVec for Vec<bool> {
 
     fn to_binary(&self) -> String {
         self.iter()
-            .map(|i| if *i { "0" } else { "1" })
+            .map(|i| if i { "1" } else { "0" })
             .collect()
     }
 }

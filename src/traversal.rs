@@ -1,3 +1,4 @@
+use bit_vec::BitVec;
 use bitvec::*;
 use tree::*;
 
@@ -8,13 +9,13 @@ use tree::*;
  */
 pub struct TreeTraverser<'a> {
     current_node: &'a TreeNode,
-    path: Vec<bool>,
+    path: BitVec<u32>,
     left_visited: bool,
     finished: bool
 }
 
 impl<'a> TreeTraverser<'a> {
-    pub fn new(current_node: &'a TreeNode, path: Vec<bool>) -> TreeTraverser<'a> {
+    pub fn new(current_node: &'a TreeNode, path: BitVec<u32>) -> TreeTraverser<'a> {
         TreeTraverser {
             current_node,
             path,
@@ -29,7 +30,7 @@ impl<'a> TreeTraverser<'a> {
      * return the leaf value and the path to the leaf if we are currently on a leaf
      * otherwise, return a new TreeTraverser starting from the next traversable node
      */
-    pub fn visit<'b>(&'b mut self) -> Option<Result<(Vec<bool>, u8), TreeTraverser<'a>>> {
+    pub fn visit<'b>(&'b mut self) -> Option<Result<(BitVec<u32>, u8), TreeTraverser<'a>>> {
         match *self.current_node {
             TreeNode::Leaf(ref leaf) => self.visit_leaf(leaf),
             TreeNode::Node(ref node) => self.visit_node(node),
@@ -37,7 +38,7 @@ impl<'a> TreeTraverser<'a> {
         }
     }
 
-    fn visit_leaf<'b>(&'b mut self, leaf: &'a Leaf) -> Option<Result<(Vec<bool>, u8), TreeTraverser<'a>>> {
+    fn visit_leaf<'b>(&'b mut self, leaf: &'a Leaf) -> Option<Result<(BitVec<u32>, u8), TreeTraverser<'a>>> {
         if !self.finished {
             self.finished = true;
             Some(Ok((self.path.clone(), leaf.value)))
@@ -46,17 +47,17 @@ impl<'a> TreeTraverser<'a> {
         }
     }
 
-    fn visit_node<'b>(&'b mut self, node: &'a TraversableNode) -> Option<Result<(Vec<bool>, u8), TreeTraverser<'a>>> {
+    fn visit_node<'b>(&'b mut self, node: &'a TraversableNode) -> Option<Result<(BitVec<u32>, u8), TreeTraverser<'a>>> {
         if self.finished {
             return None;
         }
 
         if !self.left_visited {
             self.left_visited = true;
-            Some(Err(TreeTraverser::new(node.left(), self.path.copy_append(true))))
+            Some(Err(TreeTraverser::new(node.left(), self.path.copy_append(false))))
         } else {
             self.finished = true;
-            Some(Err(TreeTraverser::new(node.right(), self.path.copy_append(false))))
+            Some(Err(TreeTraverser::new(node.right(), self.path.copy_append(true))))
         }
     }
 }
@@ -71,13 +72,13 @@ pub struct TreeIter<'a> {
 impl<'a> TreeIter<'a> {
     pub fn new(node: &'a TreeNode) -> TreeIter<'a> {
         TreeIter {
-            traversers: vec![TreeTraverser::new(node, Vec::new())]
+            traversers: vec![TreeTraverser::new(node, BitVec::new())]
         }
     }
 }
 
 impl<'a> Iterator for TreeIter<'a> {
-    type Item = (Vec<bool>, u8);
+    type Item = (BitVec<u32>, u8);
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.traversers.len() > 0 {
