@@ -1,4 +1,3 @@
-extern crate base64;
 extern crate bit_vec;
 extern crate byteorder;
 
