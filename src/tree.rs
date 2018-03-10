@@ -40,17 +40,39 @@ impl TreeNode {
             TreeNode::Node(ref node) => node.freq
         }
     }
+
+    pub fn value(&self) -> u8 {
+        match *self {
+            TreeNode::Root(ref _root) => <u8>::max_value(),
+            TreeNode::Leaf(ref leaf) => leaf.value,
+            TreeNode::Node(ref _node) => <u8>::max_value()
+        }
+    }
 }
 
 impl PartialOrd for TreeNode {
     fn partial_cmp(&self, other: &TreeNode) -> Option<Ordering> {
         self.freq().partial_cmp(&other.freq())
+            .and_then(|result| {
+                if let Ordering::Equal = result {
+                    // If frequency is equal, sort by value (desc)
+                    other.value().partial_cmp(&self.value())
+                } else {
+                    Some(result)
+                }
+            })
     }
 }
 
 impl Ord for TreeNode {
     fn cmp(&self, other: &TreeNode) -> Ordering {
-        self.freq().cmp(&other.freq())
+        let result = self.freq().cmp(&other.freq());
+        if let Ordering::Equal = result {
+            // If frequency is equal, sort by value (desc)
+            other.value().cmp(&self.value())
+        } else {
+            result
+        }
     }
 }
 
