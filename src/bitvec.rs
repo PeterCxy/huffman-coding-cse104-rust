@@ -6,6 +6,7 @@ use bit_vec::BitVec;
 pub trait MyBitVec {
     fn copy_append(&self, val: bool) -> Self;
     fn to_binary(&self) -> String;
+    fn append_all(&mut self, other: Self);
 }
 
 impl MyBitVec for BitVec<u32> {
@@ -19,5 +20,12 @@ impl MyBitVec for BitVec<u32> {
         self.iter()
             .map(|i| if i { "1" } else { "0" })
             .collect()
+    }
+
+    fn append_all(&mut self, other: BitVec<u32>) {
+        self.reserve(other.len());
+        for i in other.iter() {
+            self.push(i);
+        }
     }
 }
