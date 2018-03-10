@@ -192,12 +192,13 @@ fn _huffman_decode_step(cur_value: bool, node: &TraversableNode) -> &TreeNode {
 fn huffman_encode_to_bytes(data: &[u8]) -> Vec<u8> {
     let (freq_table, mut encoded_data, padding) = huffman_encode(data);
     let mut ret = Vec::new();
+    let freq_table_len = freq_table.len() - 1;
 
-    if freq_table.len() > <u8>::max_value() as usize {
+    if freq_table_len > <u8>::max_value() as usize {
         panic!("Table impossibly large.");
     }
 
-    ret.push(freq_table.len() as u8);
+    ret.push(freq_table_len as u8);
     ret.push(padding);
     ret.append(&mut frequency_table_to_bytes(&freq_table));
     ret.append(&mut encoded_data);
@@ -209,7 +210,7 @@ fn huffman_encode_to_bytes(data: &[u8]) -> Vec<u8> {
  * and decode it to the original data
  */
 fn huffman_decode_from_bytes(data: &[u8]) -> Vec<u8> {
-    let freq_table_len = (data[0] as usize) * 5;
+    let freq_table_len = ((data[0] as usize) + 1) * 5;
     let padding = data[1];
     let freq_table = bytes_to_frequency_table(&data[2..(2 + freq_table_len)]);
     huffman_decode(freq_table, &data[(2 + freq_table_len)..], padding)
